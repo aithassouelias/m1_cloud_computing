@@ -26,19 +26,24 @@ def draw_pitch():
         
         return fig, ax
 
+df_players = pd.read_csv("./data/male_players.csv")
+df_flags = st.session_state.df_flags
 
 def nation_page(df_players, df_flags):
     # Sidebar filter: Select Nation
     st.title("Portail sélectionneur")
+    
+
     col1, col2 = st.columns(2)
     with col1: 
         Nation = st.selectbox('Choisir un pays', df_players['Nation'].unique())
+        players_from_nation = df_players[(df_players['Nation'] == Nation)]
     with col2: 
         ovr_range = st.slider(
             "Select OVR Range", 
-            min_value=int(df_players['OVR'].min()),  # Minimum OVR value
-            max_value=int(df_players['OVR'].max()),  # Maximum OVR value
-            value=(int(df_players['OVR'].min()), int(df_players['OVR'].max())),  # Default range (min to max)
+            min_value=int(players_from_nation['OVR'].min()),  # Minimum OVR value
+            max_value=int(players_from_nation['OVR'].max()),  # Maximum OVR value
+            value=(int(players_from_nation['OVR'].min()), int(players_from_nation['OVR'].max())),  # Default range (min to max)
             step=1  # Step for slider (e.g., 1)
         )
 
