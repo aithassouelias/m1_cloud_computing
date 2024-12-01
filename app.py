@@ -1,15 +1,23 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-from pages.home import home_page
-from pages.mercato import mercato_page
-from pages.nation import nation_page
-from pages.players import players_page
-from pages.about_me import profile_page
-# Load the datasets
+import importlib
 
-if "df_players" not in st.session_state:
-    st.session_state.df_players = pd.read_csv("./data/male_players.csv")
+# Configuration globale de la page
+st.set_page_config(page_title="TalentTracker", page_icon="🎯", layout="wide")
 
+# Dictionnaire pour mapper les noms de pages aux modules Python
+PAGES = {
+    "🏠 Accueil": "my_pages.home",
+    "📊 Portail Sélectionneur": "my_pages.nation",
+    "🎯 Statistiques joueurs": "my_pages.players",
+    "ℹ️ À propos de moi": "my_pages.about_me",
+}
 
-df_flags = pd.read_csv("./data/flags_iso.csv")  # Your country flags dataset
+# Affichage des options sous forme de boutons radio
+selected_page = st.sidebar.radio("", list(PAGES.keys()))
+
+# Chargement dynamique du module correspondant
+try:
+    page_module = importlib.import_module(PAGES[selected_page])
+    page_module.run() 
+except ModuleNotFoundError:
+    st.error(f"Erreur : Impossible de charger la page '{selected_page}'")

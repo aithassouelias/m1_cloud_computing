@@ -4,6 +4,7 @@ import plotly.express as px
 from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+
 def draw_pitch():
         # Dimensions du terrain (en mètres)
         fig, ax = plt.subplots(figsize=(10, 7))
@@ -26,38 +27,58 @@ def draw_pitch():
         
         return fig, ax
 
+
 df_players = pd.read_csv("./data/male_players.csv")
-df_flags = st.session_state.df_flags
+df_flags = pd.read_csv("./data/flags_iso.csv")
 
 def nation_page(df_players, df_flags):
     # Sidebar filter: Select Nation
-    st.title("Portail sélectionneur")
+    st.title("Portail sélectionneur 🔍🌍")
     
+    st.write("")
 
-    col1, col2 = st.columns(2)
-    with col1: 
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
         Nation = st.selectbox('Choisir un pays', df_players['Nation'].unique())
-        players_from_nation = df_players[(df_players['Nation'] == Nation)]
-    with col2: 
+        players_from_nation = df_players[df_players['Nation'] == Nation]
+
+    with col2:
+        # Ajouter une liste déroulante pour filtrer par poste
+        positions = ["Tous les postes"] + sorted(players_from_nation['Position'].unique().tolist())
+        selected_position = st.selectbox("Choisir un poste", options=positions)
+        
+
+    with col3:
         ovr_range = st.slider(
-            "Select OVR Range", 
-            min_value=int(players_from_nation['OVR'].min()),  # Minimum OVR value
-            max_value=int(players_from_nation['OVR'].max()),  # Maximum OVR value
-            value=(int(players_from_nation['OVR'].min()), int(players_from_nation['OVR'].max())),  # Default range (min to max)
-            step=1  # Step for slider (e.g., 1)
+            "Note générale des joueurs", 
+            min_value=int(players_from_nation['OVR'].min()), 
+            max_value=int(players_from_nation['OVR'].max()), 
+            value=(int(players_from_nation['OVR'].min()), int(players_from_nation['OVR'].max())), 
+            step=1
         )
+        
+
+    # Appliquer les filtres de nation, OVR et poste
+    filtered_df = players_from_nation[
+        (players_from_nation['OVR'] >= ovr_range[0]) &
+        (players_from_nation['OVR'] <= ovr_range[1])
+    ]
 
     # Find the flag URL for the selected nation
     selected_flag = df_flags[(df_flags['Country'] == Nation)]
 
-    # Optionally, display some player data for the selected nation
-    players_from_nation = df_players[(df_players['Nation'] == Nation) & (df_players['OVR'] >= ovr_range[0]) & (df_players['OVR'] <= ovr_range[1])]
+    if selected_position != "Tous les postes":
+        players_from_nation = df_players[(df_players['Nation'] == Nation) & (df_players['OVR'] >= ovr_range[0]) & (df_players['OVR'] <= ovr_range[1]) & (df_players["Position"] == selected_position)]
+    else:
+        players_from_nation = df_players[(df_players['Nation'] == Nation) & (df_players['OVR'] >= ovr_range[0]) & (df_players['OVR'] <= ovr_range[1])]
 
     # Calculate average age and average OVR
     num_players = len(players_from_nation)
     average_age = players_from_nation['Age'].mean()
     average_OVR = players_from_nation['OVR'].mean()
-
+    st.write("")
+    st.write("")
     # Display the KPI cards
     col0, col1, col2, col3 = st.columns(4)
 
@@ -73,51 +94,63 @@ def nation_page(df_players, df_flags):
     with col3:
         st.metric("Note générale moyenne", f"{average_OVR:.0f}")
 
+    st.write("")
     fig, ax = draw_pitch()
     # Mapping des positions à des coordonnées sur le terrain
     position_coords = {
-        "GK": (5, 34),   # Gardien
-        "CB": (25, 34),  # Défenseur central
-        "LB": (25, 10),  # Défenseur gauche
-        "RB": (25, 58),  # Défenseur droit
-        "CM": (50, 34),  # Milieu central
-        "LW": (75, 10),  # Ailier gauche
-        "RW": (75, 58),  # Ailier droit
-        "ST": (95, 34),  # Attaquant
+        "GK": (5, 34),    # Gardien
+        "CB": (25, 34),   # Défenseur central
+        "LB": (25, 10),   # Défenseur gauche
+        "RB": (25, 58),   # Défenseur droit
+        "CDM": (40, 34),  # Milieu central défensif
+        "LM": (50, 15),   # Milieu gauche
+        "RM": (50, 53),   # Milieu droit
+        "LW": (75, 10),   # Ailier gauche
+        "RW": (75, 58),   # Ailier droit
+        "ST": (95, 34),   # Attaquant
+        "CAM": (60, 34),  # Milieu central avancé
     }
 
+
+    col1, col2 = st.columns(2)
+    with col1 :
     # Ajouter un filtre sur la Nation
-    filtered_df = players_from_nation
+        filtered_df = players_from_nation
 
-    # Compter le nombre de joueurs par position
-    position_counts = filtered_df['Position'].value_counts()
-    
-
-    # Normalize la couleur des cercles en fonction du nombre de joueurs
-    norm = plt.Normalize(vmin=position_counts.min(), vmax=position_counts.max())
-    cmap = plt.cm.get_cmap("YlOrRd")  # Choisir une palette de couleur
-
-    # Ajouter des cercles et le nombre de joueurs pour chaque position
-    for position, coord in position_coords.items():
-        count = position_counts.get(position, 0)  # Récupérer le compte ou 0
-        if count > 0:
-            # Ajuster la taille du cercle en fonction du nombre de joueurs
+        # Compter le nombre de joueurs par position
+        position_counts = filtered_df['Position'].value_counts()
         
-            # Choisir la couleur en fonction du nombre de joueurs
-            color = cmap(norm(count))
+
+        # Normalize la couleur des cercles en fonction du nombre de joueurs
+        norm = plt.Normalize(vmin=position_counts.min(), vmax=position_counts.max())
+        cmap = plt.cm.get_cmap("YlOrRd")  # Choisir une palette de couleur
+
+        # Ajouter des cercles et le nombre de joueurs pour chaque position
+        for position, coord in position_coords.items():
+            count = position_counts.get(position, 0)  # Récupérer le compte ou 0
+            if count > 0:
+                # Ajuster la taille du cercle en fonction du nombre de joueurs
             
-            # Dessiner un cercle
-            circle = Circle(coord, color=color, ec="white", lw=1, alpha=0.8)
-            ax.add_patch(circle)
-            # Ajouter le nombre de joueurs
-            ax.text(
-                coord[0], coord[1],
-                str(count),
-                color="black", fontsize=10, ha="center", va="center", fontweight="bold"
-            )
-    ax.axis("off")  
-    # Afficher le terrain sur Streamlit
-    st.pyplot(fig)
+                # Choisir la couleur en fonction du nombre de joueurs
+                color = cmap(norm(count))
+                
+                # Dessiner un cercle
+                circle = Circle(coord, color=color, ec="white", lw=1, alpha=0.8)
+                ax.add_patch(circle)
+                # Ajouter le nombre de joueurs
+                ax.text(
+                    coord[0], coord[1],
+                    str(count),
+                    color="black", fontsize=10, ha="center", va="center", fontweight="bold"
+                )
+        ax.axis("off")  
+        # Afficher le terrain sur Streamlit
+        st.pyplot(fig)
+
+    with col2:
+        # Afficher un tableau avec les informations des joueurs filtrés
+        st.dataframe(players_from_nation[['Name', 'Team', 'Position', 'OVR']].reset_index(drop=True))
+
     
     # Create a bar chart for the top 5 leagues
     league_counts = players_from_nation['League'].value_counts().reset_index()
@@ -150,4 +183,5 @@ def nation_page(df_players, df_flags):
     # Display the donut chart
     st.plotly_chart(fig)
 
-    
+def run():
+    nation_page(df_players,df_flags)
