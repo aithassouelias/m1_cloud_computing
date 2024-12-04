@@ -6,10 +6,10 @@ st.set_page_config(page_title="TalentTracker", page_icon="🎯", layout="wide")
 
 # Dictionnaire pour mapper les noms de pages aux modules Python
 PAGES = {
-    "🏠 Accueil": "my_pages.home",
-    "📊 Portail Sélectionneur": "my_pages.nation",
-    "🎯 Statistiques joueurs": "my_pages.players",
-    "ℹ️ À propos de moi": "my_pages.about_me",
+    "🏠 Accueil": "views.home",
+    "📊 Portail Sélectionneur": "views.nation",
+    "🎯 Statistiques joueurs": "views.players",
+    "ℹ️ À propos de moi": "views.about_me",
 }
 
 # Affichage des options sous forme de boutons radio

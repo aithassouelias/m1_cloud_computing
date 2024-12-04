@@ -2,24 +2,24 @@ import streamlit as st
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 import plotly.graph_objects as go
-from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid import AgGrid
 import pandas as pd
+from models.db import get_players_data  
 
 def run():
-    df_players = pd.read_csv("./data/male_players.csv")
+    df_players = get_players_data()  # Charger les données directement depuis la BDD
 
-    st.title("Player Statistics")
-    st.write("Explore player statistics and find similar profiles using machine learning.")
+    st.title("📊 Statistiques joueurs")
 
     # Colonnes pertinentes pour la similarité
     features = [
-    'OVR', 'PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY',
-    'Acceleration', 'Sprint Speed', 'Positioning', 'Finishing', 'Shot Power',
-    'Long Shots', 'Volleys', 'Penalties', 'Vision', 'Crossing', 'Free Kick Accuracy',
-    'Short Passing', 'Long Passing', 'Curve', 'Dribbling', 'Agility', 'Balance',
-    'Reactions', 'Ball Control', 'Composure', 'Interceptions', 'Heading Accuracy',
-    'Def Awareness', 'Standing Tackle', 'Sliding Tackle', 'Jumping', 'Stamina',
-    'Strength', 'Aggression'
+        'OVR', 'PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY',
+        'Acceleration', 'Sprint_Speed', 'Positioning', 'Finishing', 'Shot_Power',
+        'Long_Shots', 'Volleys', 'Penalties', 'Vision', 'Crossing', 'Free_Kick_Accuracy',
+        'Short_Passing', 'Long_Passing', 'Curve', 'Dribbling', 'Agility', 'Balance',
+        'Reactions', 'Ball_Control', 'Composure', 'Interceptions', 'Heading_Accuracy',
+        'Def_Awareness', 'Standing_Tackle', 'Sliding_Tackle', 'Jumping', 'Stamina',
+        'Strength', 'Aggression'
     ]
 
     # Filtrer les données sur les features pertinentes
@@ -57,18 +57,16 @@ def run():
 
             # Préparer la table avec les liens cliquables
             display_df = similar_players[['Name', 'Team', 'Position', 'OVR', 'Similarity (%)']]
-            
 
             # Afficher la table interactive
             st.write(f"Joueurs similaires à **{player_name}** :")
-            st.dataframe(display_df.reset_index(drop=True))
+            AgGrid(display_df.reset_index(drop=True))  # Utilisation d'AgGrid pour une table interactive
+
             # Affichage radar chart
             target_player = similar_players.iloc[0]  # Premier joueur similaire
             radar_features = [f for f in features if len(f) == 3]  # Features avec 3 caractères
 
-        
             player = st.selectbox('Choisir un joueur', similar_players['Name'])
-            
 
             fig = go.Figure()
             # Add searched player stats
@@ -80,7 +78,6 @@ def run():
                 marker=dict(color='blue')
             ))
 
-            
             target_player = similar_players[similar_players['Name'] == player].iloc[0]
             fig.add_trace(go.Scatterpolar(
                 r=target_player[radar_features].values,
@@ -98,6 +95,3 @@ def run():
             st.plotly_chart(fig)
         else:
             st.write(f"Aucun joueur trouvé pour le nom : {player_name}")
-                
-
-        
