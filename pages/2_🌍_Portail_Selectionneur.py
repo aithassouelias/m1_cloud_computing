@@ -142,6 +142,5 @@ def nation_page():
         st.plotly_chart(fig)
 
 # Fonction pour exécuter l'application
-def run():
-    nation_page()
+nation_page()
 
