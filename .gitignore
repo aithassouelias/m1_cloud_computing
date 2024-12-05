@@ -1,5 +1,6 @@
 /.venv
 /venv
-/azuredeploy.json
-/startup.txt
-/models/__pycache__
+azuredeploy.json
+startup.txt
+streamlit.sh
+__pycache__/
